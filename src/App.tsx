@@ -311,6 +311,12 @@ function App() {
 
       console.log('✓ Dados do aluno carregados do SIAGE');
 
+      // Verificar se há campos vazios
+      if (studentData.camposVazios && studentData.camposVazios.length > 0) {
+        const mensagem = `⚠️ Os seguintes campos não foram encontrados no SIAGE e precisam ser preenchidos manualmente:\n\n${studentData.camposVazios.join('\n')}`;
+        setErroBusca(mensagem);
+      }
+
       setMostrarModalCPF(false);
       setMostrarConfirmacao(true);
       setBuscando(false);
