@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { FileText, RefreshCw, History, LogOut, User, Lock, Search, Trash2, Download, GraduationCap, BookOpen, Database, CheckCircle, AlertCircle, MessageCircle, Loader } from 'lucide-react';
 import html2pdf from 'html2pdf.js';
 import { blobToBase64, sendDocumentViaWhatsApp } from '@/services/whatsappService';
+import { searchStudentByCPF } from '@/services/siageApi';
 import './App.css';
 
 interface FormData {
@@ -271,6 +272,58 @@ function App() {
       setBuscando(false);
     }
   };
+  // Buscar aluno no SIAGE pelo CPF
+  const buscarAlunoNoSiage = async () => {
+    if (!cpfBusca) {
+      setErroBusca('Digite o CPF do aluno');
+      return;
+    }
+
+    const cpfLimpo = cpfBusca.replace(/\D/g, '');
+    if (cpfLimpo.length !== 11) {
+      setErroBusca('CPF inválido. Digite 11 números.');
+      return;
+    }
+
+    setBuscando(true);
+    setErroBusca('');
+
+    try {
+      console.log('🔍 Buscando aluno no SIAGE...');
+      
+      // Chamar o backend para buscar dados no SIAGE
+      const studentData = await searchStudentByCPF(cpfBusca);
+
+      // Formatar data de nascimento para o formato esperado
+      const dataNascFormatada = studentData.dataNascimento || '';
+
+      // Preencher o formulário com os dados do SIAGE
+      setFormData({
+        nomeAluno: studentData.nomeAluno || '',
+        cpf: studentData.cpf || cpfLimpo,
+        dataNascimento: dataNascFormatada,
+        naturalidade: studentData.naturalidade || '',
+        nomeMae: studentData.nomeMae || '',
+        nomePai: studentData.nomePai || '',
+        serie: studentData.serie || '',
+        ano: studentData.ano || new Date().getFullYear().toString()
+      });
+
+      console.log('✓ Dados do aluno carregados do SIAGE');
+
+      setMostrarModalCPF(false);
+      setMostrarConfirmacao(true);
+      setBuscando(false);
+
+    } catch (error) {
+      console.error('Erro ao buscar no SIAGE:', error);
+      
+      // Se falhar no SIAGE, tentar na planilha como fallback
+      console.log('⚠️ Tentando buscar na planilha como alternativa...');
+      await buscarAlunoPorCPF();
+    }
+  };
+
 
   const confirmarDados = () => {
     setDadosConfirmados(true);
@@ -1024,7 +1077,7 @@ function App() {
               Preencher Manualmente
             </Button>
             <Button 
-              onClick={buscarAlunoPorCPF} 
+              onClick={buscarAlunoNoSiage} 
               disabled={buscando}
               className="bg-blue-900 hover:bg-blue-800"
             >
