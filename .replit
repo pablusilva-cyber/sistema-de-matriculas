@@ -1,0 +1,9 @@
+run = "npm run preview"
+modules = ["nodejs-20"]
+
+[nix]
+channel = "stable-23_11"
+
+[deployment]
+run = ["npm", "run", "preview"]
+deploymentTarget = "gce"
